@@ -1,0 +1,221 @@
+<!doctype html>
+<html>
+    <head>
+        <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">
+        <script src="static/js/jquery-3.3.1.min.js"></script>
+        <script src="static/js/hammer.min.js"></script>
+        <title>control center</title>
+        <style>
+            *{
+                padding: 0px;
+                margin: 0px;
+            }
+            .panel{
+                margin: 20px;
+                background-color: bisque;
+            }
+            .controller{
+                margin-left: auto;
+                margin-right: auto;
+                border: solid 1px black;
+                position: relative;
+                border-radius: 50%;
+                width: 398px;
+                height: 398px;
+            }
+            .pointer{
+                background-color: red;
+                height: 30px;
+                width: 30px;
+                border-radius: 50%;
+                position: absolute;
+                left: 185px;
+                top: 185px;
+            }
+        </style>
+    </head>
+    <body>
+        <button id="forward">前进</button>
+        <button id="brake">刹车</button>
+        <button id="backward">后退</button>
+        <div class="panel">
+            <div class="controller" id="controller">
+                <div class="pointer" id="pointer"></div>
+            </div>
+        </div>
+        
+    </body>
+    <script>
+        var radius;
+        var timer = null;
+        var startTime = Date.now();
+        var delay = 200;
+        var carX;
+        var carY;
+        // var throttle = function(func, delay){
+        //     var curTime = Date.now();
+        //     var remaining = delay - (curTime - startTime);
+        //     var context = this;
+        //     var args = arguments;
+        //     clearTimeout(timer);
+        //     if (remaining <= 0) {
+                
+        //         func.apply(context, args);
+        //         startTime = Date.now();
+        //     } else {
+        //         timer = setTimeout(func, remaining);
+        //     }
+        // }
+        $(document).ready(function(){
+            $('#forward').click(function(){
+                $.ajax({
+                    url:'forward?left=50&right=50',
+                    cache:false,
+                    method:'GET'
+                })
+            });
+            $('#brake').click(function(){
+                $.ajax({
+                    url:'brake',
+                    cache:false,
+                    method:'GET'
+                })
+            });
+            $('#backward').click(function(){
+                $.ajax({
+                    url:'backward?left=50&right=50',
+                    cache:false,
+                    method:'GET'
+                })
+            });
+            var panelWidth = $('.panel').width();
+            var controller_size;
+            if(panelWidth > 510){
+                controller_size = 510;
+            }else{
+                controller_size = panelWidth;
+            }
+            var controller = document.getElementById('controller');
+            $(controller).css({'height':controller_size + 'px', 'width':controller_size + 'px'});
+            radius = controller_size / 2;
+            const initPosition = radius - 15;
+            $('#pointer').css({'left':initPosition + 'px', 'top':initPosition + 'px'});
+            var mc = new Hammer(controller);
+            mc.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+            mc.on('pan', function(ev){
+                
+                var x = ev.deltaX;
+                var y = ev.deltaY;
+                var distance = moveDistance(x, y);
+                if(distance > radius){
+                    x = Math.floor(x * radius / distance);
+                    y = Math.floor(y * radius / distance);
+                }
+                $('#pointer').css({"left":(initPosition + x) + "px", "top":(initPosition + y) + "px"});
+                carX = mapSignal(x);
+                carY = mapSignal(y);
+                //throttle(driveCar, 1000);
+                //节流防抖
+                var curTime = Date.now();
+                var remaining = delay - (curTime - startTime);
+                clearTimeout(timer);
+                if (remaining <= 0) {
+                    driveCar();
+                    startTime = Date.now();
+                } else {
+                    timer = setTimeout(driveCar, remaining);
+                }
+            });
+            mc.on('panend', function(ev){
+                console.log('panend');
+                clearTimeout(timer);
+                $('#pointer').css({'left':initPosition + 'px', 'top':initPosition + 'px'});
+                brake();
+            });
+        });
+        //计算移动距离
+        function moveDistance(x, y){
+            return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+        }
+        //把移动距离映射到[0，255]范围
+        function mapSignal(x){
+            if(radius < 255){
+                var t = Math.floor(x * 255 / radius);
+                if(t > 255){
+                    //避免四舍五入到256
+                    t = 255;
+                }else if(t < - 255){
+                    t = - 255;
+                }
+                return t;
+            }else{
+                return x;
+            }
+        }
+        //驱动车辆
+        //输入映射后的x, y值
+        function driveCar(){
+            console.log(carX + ',' + carY);
+            //移动距离确定速度，左右偏转角度决定转弯幅度
+            var speed = moveDistance(carX, carY);
+            //计算与水平方向的夹角，范围 0-0.5
+            var angle = Math.abs(Math.asin(carY / speed) / Math.PI);
+            //差速比例
+            var rate = angle / 0.5;
+            var leftSpeed;
+            var rightSpeed;
+            
+            if(carX > 0){
+                //向右转
+                rightSpeed = Math.floor(speed * rate);
+                leftSpeed = Math.floor(speed / rate);
+                if(leftSpeed > 255){
+                    leftSpeed = 255;
+                }
+            }else if(carX < 0){
+                //向左转
+                leftSpeed = Math.floor(speed * rate);
+                rightSpeed = Math.floor(speed / rate);
+                if(rightSpeed > 255){
+                    rightSpeed = 255;
+                }
+            }else{
+                //直行
+                leftSpeed = rightSpeed = speed;
+            }
+            //判断前进后退
+            if(carY <= 0){
+                //前进
+                forward(leftSpeed, rightSpeed);
+            }else{
+                //后退
+                backward(leftSpeed, rightSpeed);
+            }
+        }
+        //前进
+        function forward(left, right){
+            $.ajax({
+                url:'forward?left=' + left + '&right=' + right,
+                cache:false,
+                method:'GET'
+            })
+        }
+        //刹车
+        function brake(){
+            $.ajax({
+                url:'brake',
+                cache:false,
+                method:'GET'
+            });
+        }
+        //后退
+        function backward(left, right){
+            $.ajax({
+                url:'backward?left=' + left + '&right=' + right,
+                cache:false,
+                method:'GET'
+            })
+        }
+        
+    </script>
+</html>
