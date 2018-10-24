@@ -34,5 +34,23 @@ def backward():
     arduino.write(b';')
     return 'backward, %s, %s' % (left, right)
 
+@app.route('right')
+def turnRight():
+    left = request.args.get('left', '255')
+    right = request.args.get('right', '255')
+    arduino.write(b'r,')
+    arduino.write(bytes(left +"," + right, 'ascii'))
+    arduino.write(b';')
+    return 'turn right, %s, %s' % (left, right)
+
+@app.route('left')
+def turnLeft():
+    left = request.args.get('left', '255')
+    right = request.args.get('right', '255')
+    arduino.write(b'l,')
+    arduino.write(bytes(left +"," + right, 'ascii'))
+    arduino.write(b';')
+    return 'turn left, %s, %s' % (left, right)
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True, port=8080) 

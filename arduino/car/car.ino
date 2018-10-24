@@ -44,6 +44,25 @@ void backward(int leftSpeed, int rightSpeed){
   analogWrite(EN_RIGHT, rightSpeed);
   analogWrite(EN_LEFT, leftSpeed);
 }
+//原地转向
+void turnRight(int leftSpeed, int rightSpeed){
+  //左边正向，右边反向
+  digitalWrite(LEFT_A, HIGH);
+  digitalWrite(LEFT_B, LOW);
+  digitalWrite(RIGHT_A, LOW);
+  digitalWrite(RIGHT_B, HIGH);
+  analogWrite(EN_LEFT, leftSpeed);
+  analogWrite(EN_RIGHT, rightSpeed);
+}
+void turnLeft(int leftSpeed, int rightSpeed){
+  //右边正向，左边反向
+  digitalWrite(LEFT_A, LOW);
+  digitalWrite(LEFT_B, HIGH);
+  digitalWrite(RIGHT_A, HIGH);
+  digitalWrite(RIGHT_B, LOW);
+  analogWrite(EN_LEFT, leftSpeed);
+  analogWrite(EN_RIGHT, rightSpeed);
+}
 void brake(){
   Serial.println("brake");
   digitalWrite(LEFT_A, LOW);
@@ -59,7 +78,7 @@ char command;
 String param1;
 String param2;
 /* state 为指令解析状态机状态
-* 0-准备读入命令 f|b|s -> 1,other -> 5
+* 0-准备读入命令 f|b|s|r|l -> 1,other -> 5
 * 1-准备读入分隔符 "," -> 2 ";" -> 4, other -> 5
 * 2-准备读入第一个参数 0-9 -> 2, "," -> 3, other -> 
 * 3-准备读入第二个参数 0-9 -> 3, ";" -> 4
@@ -74,7 +93,8 @@ void fsm(char input){
       //f - forward, 前进
       //b - backward, 后退
       //s - stop, 停止
-      if(input == 'f' || input =='b' || input == 's'){
+      if(input == 'f' || input =='b' || input == 's' 
+          || input == 'r' || input == 'l'){
         command = input;
         state = 1;
         Serial.println("state -> 1");
@@ -153,6 +173,12 @@ void executeCommand(){
       break;
     case 's':
       brake();
+      break;
+    case 'r':
+      turnRight(leftSpeed, rightSpeed);
+      break;
+    case 'l':
+      turnLeft(leftSpeed, rightSpeed);
       break;
   }
 }
