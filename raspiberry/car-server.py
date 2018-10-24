@@ -11,6 +11,10 @@ app = Flask(__name__)
 def index():
     return render_template('index.html') 
 
+@app.route('/controller')
+def controller2():
+    return render_template('controller.html')
+
 @app.route('/forward')
 def forward():
     left = request.args.get('left', '255')
