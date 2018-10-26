@@ -38,7 +38,7 @@ def backward():
     arduino.write(b';')
     return 'backward, %s, %s' % (left, right)
 
-@app.route('right')
+@app.route('/right')
 def turnRight():
     left = request.args.get('left', '255')
     right = request.args.get('right', '255')
@@ -47,7 +47,7 @@ def turnRight():
     arduino.write(b';')
     return 'turn right, %s, %s' % (left, right)
 
-@app.route('left')
+@app.route('/left')
 def turnLeft():
     left = request.args.get('left', '255')
     right = request.args.get('right', '255')

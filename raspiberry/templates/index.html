@@ -32,6 +32,13 @@
                 left: 185px;
                 top: 185px;
             }
+            .center{
+                margin-left: auto;
+                margin-right: auto;
+                display: flex;
+                width: 400px;
+                justify-content: space-around;
+            }
         </style>
     </head>
     <body>
@@ -43,7 +50,13 @@
                 <div class="pointer" id="pointer"></div>
             </div>
         </div>
-        
+        <div class="center">
+            <button id="left200" ontouchstart="turnLeft(200)" ontouchend="brake()" onmousedown="turnLeft(200)" onmouseup="brake()">左转2档</button>
+            <button id="left50" ontouchstart="turnLeft(50)" ontouchend="brake()" onmousedown="turnLeft(50)" onmouseup="brake()">左转1档</button>
+            <button id="right50" ontouchstart="turnRight(50)" ontouchend="brake()" onmousedown="turnRight(50)" onmouseup="brake()">右转1档</button>
+            <button id="right200" ontouchstart="turnRight(200)" ontouchend="brake()" onmousedown="turnRight(200)" onmouseup="brake()">右转2档</button>
+        </div>
+        <div id="message"></div>
     </body>
     <script>
         var radius;
@@ -212,6 +225,22 @@
         function backward(left, right){
             $.ajax({
                 url:'backward?left=' + left + '&right=' + right,
+                cache:false,
+                method:'GET'
+            })
+        }
+        //右转
+        function turnRight(speed){
+            $.ajax({
+                url:'right?left=' + speed + '&right=' + speed,
+                cache:false,
+                method:'GET'
+            })
+        }
+        //左转
+        function turnLeft(speed){
+            $.ajax({
+                url:'left?left=' + speed + '&right=' + speed,
                 cache:false,
                 method:'GET'
             })
