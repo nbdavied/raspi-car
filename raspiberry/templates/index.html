@@ -171,6 +171,11 @@
             console.log(carX + ',' + carY);
             //移动距离确定速度，左右偏转角度决定转弯幅度
             var speed = moveDistance(carX, carY);
+            if(speed < 50){
+                //输出太小时没法驱动轮子，只会嗡嗡叫，直接当作停止
+                brake();
+                return
+            }
             //计算与水平方向的夹角，范围 0-0.5
             var angle = Math.abs(Math.asin(carY / speed) / Math.PI);
             //差速比例
@@ -205,42 +210,48 @@
                 backward(leftSpeed, rightSpeed);
             }
         }
+        var seq = {{seq}};
         //前进
         function forward(left, right){
+            seq ++;
             $.ajax({
-                url:'forward?left=' + left + '&right=' + right,
+                url:'forward?left=' + left + '&right=' + right + '&seq=' + seq,
                 cache:false,
                 method:'GET'
             })
         }
         //刹车
         function brake(){
+            seq ++;
             $.ajax({
-                url:'brake',
+                url:'brake?seq=' + seq,
                 cache:false,
                 method:'GET'
             });
         }
         //后退
         function backward(left, right){
+            seq ++;
             $.ajax({
-                url:'backward?left=' + left + '&right=' + right,
+                url:'backward?left=' + left + '&right=' + right + '&seq=' + seq,
                 cache:false,
                 method:'GET'
             })
         }
         //右转
         function turnRight(speed){
+            seq ++;
             $.ajax({
-                url:'right?left=' + speed + '&right=' + speed,
+                url:'right?left=' + speed + '&right=' + speed + '&seq=' + seq,
                 cache:false,
                 method:'GET'
             })
         }
         //左转
         function turnLeft(speed){
+            seq ++;
             $.ajax({
-                url:'left?left=' + speed + '&right=' + speed,
+                url:'left?left=' + speed + '&right=' + speed + '&seq=' + seq,
                 cache:false,
                 method:'GET'
             })
